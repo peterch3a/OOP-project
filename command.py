@@ -34,6 +34,38 @@ class Command(cmd.Cmd):
         """Show all animals"""
         self.zoo.show_animals()
 
-    def do_exit(self, arg):
-        """Exit the program"""
-        return True
+    def do_show_budget(self, arg):
+        """Show current budget amount"""
+        self.zoo.show_budget()
+
+    def do_add_food(self, arg):
+        """Purchase food"""
+        parts = arg.split()
+
+        if len(parts) != 2:
+            print("Usage: add_food <FoodType> <Quantity>")
+            return
+        
+        food_type = parts[0]
+        food_quantity = parts[1]
+
+        if food_type.lower() not in ("meat", "fruit"):
+            print("Error: Food type must be 'Meat' or 'Fruit'")
+            return
+
+        try:
+            food_quantity = int(food_quantity)
+        except ValueError:
+            print("Error: Quantity must be an integer")
+            return
+
+        self.zoo.add_food(food_type, food_quantity)
+
+    def do_show_food(self, arg):
+        """Show current food amount"""
+        self.zoo.show_food()
+
+
+    # def do_exit(self, arg):
+    #     """Exit the program"""
+    #     return True

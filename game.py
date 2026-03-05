@@ -1,3 +1,5 @@
+import threading
+import time
 from zoo import Zoo
 from command import Command
 
@@ -6,32 +8,21 @@ class Game:
         self.zoo = Zoo()
         self.command = Command(self.zoo)
 
+    def start_simulation_thread(self):
+        def loop():
+            while True:
+                self.zoo.update()
+                time.sleep(2)
+
+        t = threading.Thread(target=loop, daemon=True)
+        t.start()
+
     def run(self):
-        exit = False
-        while exit is False:
-            self.command.cmdloop()
-        
-            # choice = input("Enter your choice: ")
-            # if choice == "1":
-            #     self.view_status()
-            # elif choice == "2":
-            #     self.add_enclosure()
-            # elif choice == "3":
-            #     self.add_visitor()
-            # elif choice == "4":
-            #     self.add_food()
-            # elif choice == "5":
-            #     self.add_medicine()
-            # elif choice == "6":
-            #     self.zoo.add_animal()
-            # elif choice == "7":
-            #     self.zoo.show_animals()
-            # elif choice == "10":
-            #     print("Exiting the game. Goodbye!")
-            #     exit = True
-            # else:
-            #     print("Invalid choice. Please try again.")
+        self.start_simulation_thread()
+        self.command.cmdloop()
 
 game=Game()
 game.run()
+
+
 
