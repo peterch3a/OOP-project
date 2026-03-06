@@ -2,6 +2,7 @@ import random
 from manager import Manager
 from animal import Animal
 from food import Food
+from enclosure import Enclosure
 
 class Zoo:
     LOW_FOOD_THRESHOLD = 30
@@ -14,6 +15,7 @@ class Zoo:
         self.food = [Food("meat", 100),Food("fruit", 100)]
         self.medicine_inventory = []
         self.animals = []
+        
 
     def update(self):
         for animal in self.animals:
@@ -64,8 +66,28 @@ class Zoo:
 
         self.food = [f for f in self.food if f.quantity > 0]
 
-    # def add_enclosure(self, enclosure):
-    #     self.enclosures.append(enclosure)
+    def add_enclosure(self, habitat_type):
+        enclosure = Enclosure(habitat_type)
+        self.enclosures.append(enclosure)
+        return enclosure
+
+    def upgrade_enclosure(self, enclosure_name, cost=50):
+        if self.manager.budget < cost:
+            raise ValueError("Not enough budget to upgrade enclosure.")
+
+        for enclosure in self.enclosures:
+            if enclosure.name.lower() == enclosure_name.lower():
+                new_cap = enclosure.upgrade()
+                self.manager.budget -= cost
+                return enclosure, new_cap
+
+        raise ValueError(f"No enclosure found with name '{enclosure_name}'.")
+
+
+    def show_enclosures(self):
+        print("Enclosures in the zoo:")
+        for enclosure in self.enclosures:
+            print(f"- {enclosure}")
 
     # def add_visitor(self, visitor):
     #     self.visitors.append(visitor)
@@ -77,8 +99,15 @@ class Zoo:
     #     return f"Zoo: {self.name} with {len(self.enclosures)} enclosures"
 
     def add_animal(self):
+        if not self.enclosures:
+            raise ValueError("No enclosures available. Please add an enclosure first.")
+
         animal = Animal()
         self.animals.append(animal)
+
+        enclosure = random.choice(self.enclosures)
+        enclosure.add_animal(animal)
+
         return animal
 
     def show_animals(self):
@@ -88,8 +117,6 @@ class Zoo:
 
     def show_budget(self):
         print("Budget: ",self.manager.budget)
-
-
 
 class Medicine:
     def __init__(self, name, dosage):
@@ -108,27 +135,5 @@ class Habitat:
     def __str__(self):
         return f"{self.habitat_type} (Temp: {self.temperature}, Humidity: {self.humidity})"
 
-class Enclosure:
-    def __init__(self, name, habitat):
-        self.name = name
-        self.habitat = habitat
-        self.animals = []
 
-    def add_animal(self, animal):
-        self.animals.append(animal)
-
-    def __str__(self):
-        return f"Enclosure: {self.name}, Habitat: {self.habitat}"
-
-savannah = Habitat("Savannah", temperature=30, humidity=40)
-kangaroo_enclosure = Enclosure("Outback Zone", savannah)
-
-# k1 = Kangaroo("Joey", age=3, fur_type="Short brown", pouch_size="Medium")
-# kangaroo_enclosure.add_animal(k1)
-
-penguin_habitat = Habitat("Arctic", temperature=0, humidity=70)
-penguin_enclosure = Enclosure("Penguin Cove", penguin_habitat)
-
-# p1 = Penguin("Pingu", age=2, wing_span=50)
-# penguin_enclosure.add_animal(p1)
 
