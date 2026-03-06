@@ -5,6 +5,7 @@ from animal import Animal
 from food import Food
 from enclosure import Enclosure
 from animal import Koala, Kangaroo, WedgeTailedEagle
+from visitor import Visitor
 
 class Zoo:
     LOW_FOOD_THRESHOLD = 30
@@ -17,14 +18,19 @@ class Zoo:
         self.visitors = []
         self.food = [Food("meat", 100),Food("leaves", 100)]
         self.medicine_inventory = []
+        self.ticket_price = 25
         
     def update(self):
         for enclosure in self.enclosures:
             for animal in enclosure.animals:
                 animal.deteriorate_happiness()
 
+        for visitor in self.visitors:
+            visitor.deteriorate_happiness()
+
         self.handle_breeding()
         self.feed_animals()
+        self.visitor_enter()
 
     def add_food(self, food_type, food_quantity):
         for food in self.food:
@@ -42,7 +48,7 @@ class Zoo:
 
         for food_type, food_obj in food_map.items():
             if 0 < food_obj.quantity < Zoo.LOW_FOOD_THRESHOLD:
-                self.command.print_warning(
+                print(
                     f"Running low on {food_type.capitalize()}! Remaining: {food_obj.quantity}"
                 )
         
@@ -54,7 +60,7 @@ class Zoo:
                 diet = animal.preferred_food.lower()
 
                 if diet not in food_map or food_map[diet].quantity <= 0:
-                    self.command.print_warning(
+                    print(
                         f"No {diet} available to feed {animal.name} ({type(animal).__name__})."
                     )
                     continue
@@ -114,7 +120,6 @@ class Zoo:
 
         animal = species_type[species]()
         
-
         enclosure = random.choice(self.enclosures)
         enclosure.add_animal(animal)
 
@@ -165,11 +170,21 @@ class Zoo:
                         a.has_bred = True
                         # a.breeding_counter = 0
 
+    def visitor_enter(self):
+        if random.random() <= 0.3:
+            self.manager.budget += self.ticket_price
+            visitor = Visitor()
+            self.visitors.append(visitor)
+            print("New visitor arrived: ",visitor)
+
+    def show_visitors(self):
+        print("Visitors in the zoo:")
+        for visitor in self.visitors:
+            print(visitor)
+
     def show_budget(self):
         print("Budget: ",self.manager.budget)
 
-    # def add_visitor(self, visitor):
-    #     self.visitors.append(visitor)
 
     # def add_medicine(self, medicine):
     #     self.medicine_inventory.append(medicine)
@@ -184,6 +199,7 @@ class Zoo:
 
 #     def __str__(self):
 #         return f"{self.name}, dosage: {self.dosage}"
+
 
 # class Habitat:
 #     def __init__(self, habitat_type, temperature, humidity):

@@ -6,7 +6,6 @@ class Animal(ABC):
     
     def __init__(self):
         self.name = random.choice(Animal.ANIMAL_NAMES)
-        self.age = random.randint(1, 20)
         self.happiness = 100
         self.enclosure = None
         self.status = "Alive"
@@ -26,7 +25,7 @@ class Animal(ABC):
         if self.happiness <= 0 and self.status == "Alive":
             self.status = "Dead"
             if hasattr(self, "command"):
-                self.command.print_warning(
+                print(
                     f"{self.name} has died due to poor conditions!"
                 )
 

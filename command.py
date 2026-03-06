@@ -1,4 +1,5 @@
-import cmd
+from prompt_toolkit import PromptSession
+from prompt_toolkit.patch_stdout import patch_stdout
 
 
 def command_category(name):
@@ -7,27 +8,52 @@ def command_category(name):
         return func
     return decorator
 
-class Command(cmd.Cmd):
+class Command:
     CATEGORY_ORDER = ["Status","Shop","System"]
     intro = 'Welcome to OzZoo'
     prompt = ">> "
 
     def __init__(self, zoo):
-        super().__init__()
         self.zoo = zoo
         self.zoo.command = self
+        self.session = PromptSession()
 
-    def preloop(self):
+    def cmdloop(self):
+        print(self.intro)
         self.show_available_commands()
 
-    def postcmd(self, stop, line):
-        print(f"Current budget: {self.zoo.manager.budget}")
-        return False
+        with patch_stdout():
+            while True:
+                try:
+                    line = self.session.prompt(self.prompt)
+                    line = line.strip()
+
+                    if not line:
+                        continue
+
+                    parts = line.split(maxsplit=1)
+                    cmd = parts[0]
+                    arg = parts[1] if len(parts) > 1 else ""
+
+                    method_name = f"do_{cmd}"
+                    if hasattr(self, method_name):
+                        method = getattr(self, method_name)
+                        method(arg)
+                    else:
+                        print(f"Unknown command: {cmd}")
+
+                    print(f"Current budget: {self.zoo.manager.budget}")
+
+                except KeyboardInterrupt:
+                    continue
+                except EOFError:
+                    print("\nExiting...")
+                    break
 
     def show_available_commands(self):
         categories = {}
 
-        for name in self.get_names():
+        for name in dir(self):
             if name.startswith("do_"):
                 method = getattr(self, name)
                 category = getattr(method, "category", "System")
@@ -162,6 +188,11 @@ class Command(cmd.Cmd):
     def do_show_enclosures(self, arg):
         """Show all Enclosures"""
         self.zoo.show_enclosures()
+
+    @command_category("Status")
+    def do_show_visitors(self, arg):
+        """Show all Visitors"""
+        self.zoo.show_visitors()
 
     # def do_exit(self, arg):
     #     """Exit the program"""
