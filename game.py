@@ -10,6 +10,7 @@ class Game:
 
     def start_simulation_thread(self):
         def loop():
+            time.sleep(1)
             while True:
                 self.zoo.update()
                 time.sleep(2)

@@ -24,10 +24,7 @@ class Animal(ABC):
 
         if self.happiness <= 0 and self.status == "Alive":
             self.status = "Dead"
-            if hasattr(self, "command"):
-                print(
-                    f"{self.name} has died due to poor conditions!"
-                )
+            print(f"{self.name} has died due to poor conditions!")
 
         if self.happiness > 60:
             self.breeding_counter += 1
@@ -49,7 +46,7 @@ class Animal(ABC):
         pass
 
     def __str__(self):
-        return f"{self.name} ({self.__class__.__name__}, {self.happiness}, {self.status})"
+        return f"{self.name} ({self.__class__.__name__}, Happiness: {self.happiness}, {self.status})"
 
 class Mammal(Animal):
     def diet_type(self):
@@ -93,7 +90,6 @@ class WedgeTailedEagle(Bird):
     def __init__(self):
         super().__init__()
         self.required_habitat = "Mountain Range"
-    
 
     def make_sound(self):
         return "Screech"

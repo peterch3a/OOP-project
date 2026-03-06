@@ -24,14 +24,18 @@ class Zoo:
         for enclosure in self.enclosures:
             for animal in enclosure.animals:
                 animal.deteriorate_happiness()
+            enclosure.animals = [a for a in enclosure.animals if a.status != "Dead"]
 
         for visitor in self.visitors:
             visitor.deteriorate_happiness()
+            self.visitor_goto_enclosure(visitor)
+            self.visitor_view_enclosure(visitor)
 
         self.handle_breeding()
         self.feed_animals()
         self.visitor_enter()
-
+        self.visitors = [v for v in self.visitors if v.status != "Exited"]
+        
     def add_food(self, food_type, food_quantity):
         for food in self.food:
             if food.food_type.lower() == food_type:
@@ -48,9 +52,7 @@ class Zoo:
 
         for food_type, food_obj in food_map.items():
             if 0 < food_obj.quantity < Zoo.LOW_FOOD_THRESHOLD:
-                print(
-                    f"Running low on {food_type.capitalize()}! Remaining: {food_obj.quantity}"
-                )
+                print(f"Running low on {food_type.capitalize()}! Remaining: {food_obj.quantity}")
         
         for enclosure in self.enclosures:
             for animal in enclosure.animals:
@@ -72,9 +74,13 @@ class Zoo:
             # if food_map[diet].quantity < 0:
             #     food_map[diet].quantity = 0
 
-    def add_enclosure(self, habitat_type):
+    def add_enclosure(self, habitat_type, cost=400):
+        if self.manager.budget < cost:
+            raise ValueError("Not enough budget to buy enclosure.")
         enclosure = Enclosure(habitat_type)
         self.enclosures.append(enclosure)
+        self.manager.budget -= cost
+        # print(f"Your new budget is {self.manager.budget}")
         return enclosure
 
     def upgrade_enclosure(self, enclosure_name, cost=50):
@@ -85,6 +91,7 @@ class Zoo:
             if enclosure.name.lower() == enclosure_name.lower():
                 new_cap = enclosure.upgrade()
                 self.manager.budget -= cost
+                # print(f"Your new budget is {self.manager.budget}")
                 return enclosure, new_cap
 
         raise ValueError(f"No enclosure found with name '{enclosure_name}'.")
@@ -171,16 +178,58 @@ class Zoo:
                         # a.breeding_counter = 0
 
     def visitor_enter(self):
-        if random.random() <= 0.3:
+        if random.random() <= 0.2:
             self.manager.budget += self.ticket_price
             visitor = Visitor()
             self.visitors.append(visitor)
-            print("New visitor arrived: ",visitor)
+            print("New visitor arrived:",visitor)
 
     def show_visitors(self):
         print("Visitors in the zoo:")
         for visitor in self.visitors:
             print(visitor)
+
+    def visitor_goto_enclosure(self, visitor):
+        if len(self.enclosures) == 0:
+            return
+        
+        if random.random() <= 0.1:
+            chosen_enclosure = random.choice(self.enclosures)
+            visitor.enclosure = chosen_enclosure
+            print(f"{visitor.name} has entered Enclosure {chosen_enclosure}")
+
+    def visitor_view_enclosure(self, visitor):
+        if visitor.status == "Exited":
+            return
+
+        enclosure = visitor.enclosure
+        if enclosure is None:
+            return
+
+        if len(enclosure.animals) <= 0:
+            visitor.deteriorate_happiness(5)
+            visitor.enclosure = None
+            print(f"{visitor.name} saw no animals in Enclosure {enclosure.name} and felt disappointed.")
+            return
+
+        avg_happiness = sum(a.happiness for a in enclosure.animals) / len(enclosure.animals)
+
+        if avg_happiness >= 70:
+            visitor.happiness = min(100, visitor.happiness + 10)
+            self.manager.budget += 100
+            visitor.enclosure = None
+            print(f"{visitor.name} enjoyed seeing the happy animals in Enclosure {enclosure.name}. They donated $100! Your new budget is {self.manager.budget}")
+        elif avg_happiness >= 40:
+            visitor.happiness = min(100, visitor.happiness + 2)
+            visitor.enclosure = None
+            print(f"{visitor.name} had an okay time viewing Enclosure {enclosure.name}.")
+        else:
+            visitor.deteriorate_happiness(10)
+            visitor.enclosure = None
+            print(f"{visitor.name} felt sad seeing the unhappy animals in Enclosure {enclosure.name}.")
+        
+
+
 
     def show_budget(self):
         print("Budget: ",self.manager.budget)

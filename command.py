@@ -76,8 +76,6 @@ class Command:
                 for cmd_name, doc in commands:
                     print(f"  {cmd_name:<15} {doc}")
 
-        print()
-
     def do_menu(self, arg):
         """Show menu"""
         self.show_available_commands()
