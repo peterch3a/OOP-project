@@ -11,6 +11,8 @@ class Animal(ABC):
         self.enclosure = None
         self.status = "Alive"
         self.required_habitat = None
+        self.breeding_counter = 0
+        self.has_bred = False
 
     def deteriorate_happiness(self, amount=10):
         if self.status == "Dead":
@@ -23,19 +25,21 @@ class Animal(ABC):
 
         if self.happiness <= 0 and self.status == "Alive":
             self.status = "Dead"
-            print(f"{self.name} has died due to poor conditions!")
+            if hasattr(self, "command"):
+                self.command.print_warning(
+                    f"{self.name} has died due to poor conditions!"
+                )
 
-    #     if (self.happiness <= 0 and self.status == "Alive"):
-    #         self.status = "Dead"
-    #         print(self.name," has died!")
-    #     self.happiness = max(0, self.happiness - amount)
+        if self.happiness > 60:
+            self.breeding_counter += 1
+        else:
+            self.breeding_counter = 0
 
     def feed(self, amount):
-        if (self.happiness > 50 or self.status == "Dead"):
+        if self.status == "Dead":
             return
-        
-        self.happiness = max(0, self.happiness + amount)
 
+        self.happiness = min(100, self.happiness + amount)
 
     @abstractmethod
     def make_sound(self):
@@ -57,6 +61,8 @@ class Marsupial(Mammal):
         return "Chitter-chatter"
 
 class Koala(Marsupial):
+    preferred_food = "leaves"
+    happiness_gain = 10
     def __init__(self):
         super().__init__()
         self.required_habitat = "Eucalyptus Forest"
@@ -65,12 +71,14 @@ class Koala(Marsupial):
         return "Grunt"
 
 class Kangaroo(Marsupial):
+    preferred_food = "leaves"
+    happiness_gain = 10
     def __init__(self):
         super().__init__()
         self.required_habitat = "Grassland"
 
     def make_sound(self):
-        return "Thump-thump"
+        return "Thump"
 
 class Bird(Animal):
     def __init__(self):
@@ -80,13 +88,13 @@ class Bird(Animal):
     def make_sound(self):
         return "Chirp"
 
-    def diet_type(self):
-        return "Omnivore"
-
 class WedgeTailedEagle(Bird):
+    preferred_food = "meat"
+    happiness_gain = 10
     def __init__(self):
         super().__init__()
         self.required_habitat = "Mountain Range"
+    
 
     def make_sound(self):
         return "Screech"

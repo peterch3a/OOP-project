@@ -1,32 +1,36 @@
 import random
+
 from manager import Manager
 from animal import Animal
 from food import Food
 from enclosure import Enclosure
+from animal import Koala, Kangaroo, WedgeTailedEagle
 
 class Zoo:
     LOW_FOOD_THRESHOLD = 30
     FEED_AMOUNT_PER_ANIMAL = 5
+    ANIMAL_COSTS = {"Koala": 150,"Kangaroo": 150, "WedgeTailedEagle": 100}
 
     def __init__(self):
         self.manager = Manager()
         self.enclosures = []
         self.visitors = []
-        self.food = [Food("meat", 100),Food("fruit", 100)]
+        self.food = [Food("meat", 100),Food("leaves", 100)]
         self.medicine_inventory = []
-        self.animals = []
         
-
     def update(self):
-        for animal in self.animals:
-            animal.deteriorate_happiness()
+        for enclosure in self.enclosures:
+            for animal in enclosure.animals:
+                animal.deteriorate_happiness()
 
+        self.handle_breeding()
         self.feed_animals()
 
     def add_food(self, food_type, food_quantity):
-        food = Food(food_type, food_quantity)
-        self.food.append(food)
-        return food
+        for food in self.food:
+            if food.food_type.lower() == food_type:
+                food.quantity += food_quantity
+                return food
 
     def show_food(self):
         print("Food in the zoo:")
@@ -34,37 +38,33 @@ class Zoo:
             print(f"- {food}")
 
     def feed_animals(self):
-        total_food = sum(f.quantity for f in self.food)
+        food_map = {f.food_type.lower(): f for f in self.food}
 
-        if total_food < Zoo.LOW_FOOD_THRESHOLD:
-            print(f"WARNING: Food is running low! Total remaining: {total_food}")
+        for food_type, food_obj in food_map.items():
+            if 0 < food_obj.quantity < Zoo.LOW_FOOD_THRESHOLD:
+                self.command.print_warning(
+                    f"Running low on {food_type.capitalize()}! Remaining: {food_obj.quantity}"
+                )
+        
+        for enclosure in self.enclosures:
+            for animal in enclosure.animals:
+                if animal.status == "Dead":
+                    continue
 
-        if total_food <= 0:
-            print("No food available! Animals cannot be fed.")
-            return
+                diet = animal.preferred_food.lower()
 
-        for animal in self.animals:
-            if total_food <= 0:
-                print("Food ran out while feeding animals.")
-                break
+                if diet not in food_map or food_map[diet].quantity <= 0:
+                    self.command.print_warning(
+                        f"No {diet} available to feed {animal.name} ({type(animal).__name__})."
+                    )
+                    continue
 
-            animal.feed(Zoo.FEED_AMOUNT_PER_ANIMAL)
+                animal.feed(animal.happiness_gain)
 
-            self.consume_food(Zoo.FEED_AMOUNT_PER_ANIMAL)
-            total_food -= Zoo.FEED_AMOUNT_PER_ANIMAL
+                food_map[diet].quantity -= Zoo.FEED_AMOUNT_PER_ANIMAL
 
-    def consume_food(self, amount_needed):
-        remaining = amount_needed
-
-        for food in self.food:
-            if food.quantity >= remaining:
-                food.quantity -= remaining
-                return
-            else:
-                remaining -= food.quantity
-                food.quantity = 0
-
-        self.food = [f for f in self.food if f.quantity > 0]
+            # if food_map[diet].quantity < 0:
+            #     food_map[diet].quantity = 0
 
     def add_enclosure(self, habitat_type):
         enclosure = Enclosure(habitat_type)
@@ -83,11 +83,90 @@ class Zoo:
 
         raise ValueError(f"No enclosure found with name '{enclosure_name}'.")
 
-
     def show_enclosures(self):
         print("Enclosures in the zoo:")
         for enclosure in self.enclosures:
             print(f"- {enclosure}")
+
+    def add_animal(self, species, enclosure_name):
+        if not self.enclosures:
+            raise ValueError("No enclosures available. Please add an enclosure first.")
+
+        species_type = {"Koala": Koala, "Kangaroo": Kangaroo, "WedgeTailedEagle": WedgeTailedEagle}
+
+        if species not in species_type:
+            raise ValueError(f"Unknown species '{species}'.")
+
+        cost = Zoo.ANIMAL_COSTS[species]
+        if self.manager.budget < cost:
+            raise ValueError(f"Not enough budget to purchase a {species} (cost {cost}).")
+        
+        enclosure = None
+        for e in self.enclosures:
+            if e.name.lower() == enclosure_name.lower():
+                enclosure = e
+                break
+
+        if enclosure is None:
+            raise ValueError(f"No enclosure found with name '{enclosure_name}'.")
+
+        self.manager.budget -= cost
+
+        animal = species_type[species]()
+        
+
+        enclosure = random.choice(self.enclosures)
+        enclosure.add_animal(animal)
+
+        return animal, enclosure
+
+    def show_animals(self):
+        print("Animals in the zoo:")
+        for enclosure in self.enclosures:
+            print(enclosure)
+            for animal in enclosure.animals:
+                print(f"\t- {animal}")
+
+    def handle_breeding(self):
+        BREEDING_THRESHOLD = 7
+
+        for enclosure in self.enclosures:
+            species_groups = {}
+            for animal in enclosure.animals:
+                if animal.status == "Alive":
+                    species_groups.setdefault(type(animal), []).append(animal)
+
+            for species, group in species_groups.items():
+                if len(group) < 2:
+                    continue
+
+                eligible = [
+                    a for a in group
+                    if a.breeding_counter >= BREEDING_THRESHOLD and not a.has_bred
+                ]
+
+                if len(eligible) >= 2:
+
+                    if len(enclosure.animals) >= enclosure.capacity:
+                        print(
+                            f"Breeding blocked in enclosure {enclosure.name}: "
+                            f"capacity {enclosure.capacity} reached."
+                        )
+                        for a in eligible:
+                            a.breeding_counter = 0
+                        continue
+
+                    baby = species()
+                    enclosure.add_animal(baby)
+
+                    print(f"A new {species.__name__} has been born in enclosure {enclosure.name}!")
+
+                    for a in eligible:
+                        a.has_bred = True
+                        # a.breeding_counter = 0
+
+    def show_budget(self):
+        print("Budget: ",self.manager.budget)
 
     # def add_visitor(self, visitor):
     #     self.visitors.append(visitor)
@@ -98,42 +177,22 @@ class Zoo:
     # def __str__(self):
     #     return f"Zoo: {self.name} with {len(self.enclosures)} enclosures"
 
-    def add_animal(self):
-        if not self.enclosures:
-            raise ValueError("No enclosures available. Please add an enclosure first.")
+# class Medicine:
+#     def __init__(self, name, dosage):
+#         self.name = name
+#         self.dosage = dosage
 
-        animal = Animal()
-        self.animals.append(animal)
+#     def __str__(self):
+#         return f"{self.name}, dosage: {self.dosage}"
 
-        enclosure = random.choice(self.enclosures)
-        enclosure.add_animal(animal)
+# class Habitat:
+#     def __init__(self, habitat_type, temperature, humidity):
+#         self.habitat_type = habitat_type
+#         self.temperature = temperature
+#         self.humidity = humidity
 
-        return animal
-
-    def show_animals(self):
-        print("Animals in the zoo:")
-        for animal in self.animals:
-            print(f"- {animal}")
-
-    def show_budget(self):
-        print("Budget: ",self.manager.budget)
-
-class Medicine:
-    def __init__(self, name, dosage):
-        self.name = name
-        self.dosage = dosage
-
-    def __str__(self):
-        return f"{self.name}, dosage: {self.dosage}"
-
-class Habitat:
-    def __init__(self, habitat_type, temperature, humidity):
-        self.habitat_type = habitat_type
-        self.temperature = temperature
-        self.humidity = humidity
-
-    def __str__(self):
-        return f"{self.habitat_type} (Temp: {self.temperature}, Humidity: {self.humidity})"
+#     def __str__(self):
+#         return f"{self.habitat_type} (Temp: {self.temperature}, Humidity: {self.humidity})"
 
 
 

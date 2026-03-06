@@ -1,5 +1,6 @@
 import cmd
 
+
 def command_category(name):
     def decorator(func):
         func.category = name
@@ -8,24 +9,24 @@ def command_category(name):
 
 class Command(cmd.Cmd):
     CATEGORY_ORDER = ["Status","Shop","System"]
-
     intro = 'Welcome to OzZoo'
     prompt = ">> "
 
     def __init__(self, zoo):
         super().__init__()
         self.zoo = zoo
+        self.zoo.command = self
 
     def preloop(self):
         self.show_available_commands()
 
     def postcmd(self, stop, line):
-        return stop
+        print(f"Current budget: {self.zoo.manager.budget}")
+        return False
 
     def show_available_commands(self):
         categories = {}
 
-        # Collect commands into categories
         for name in self.get_names():
             if name.startswith("do_"):
                 method = getattr(self, name)
@@ -57,10 +58,28 @@ class Command(cmd.Cmd):
 
     @command_category("Shop")
     def do_add_animal(self, arg):
-        """Purchase an Animal *Requires an Enclosure*"""
+        """Purchase an Animal and place it in an Enclosure: add_animal <Species> <EnclosureName>"""
+
+        if not self.zoo.enclosures:
+            print("Error: No enclosures available. Please add an enclosure first.")
+            return
+
+        parts = arg.split()
+
+        if len(parts) != 2:
+            print("Usage: add_animal <Koala|Kangaroo|WedgeTailedEagle> <EnclosureName>")
+            print("Available enclosures:")
+            for e in self.zoo.enclosures:
+                print(f"  {e.name} ({e.habitat_type}, capacity {e.capacity})")
+            return
+
+        species, enclosure_name = parts
+
         try:
-            added_animal = self.zoo.add_animal()
-            print("Added Animal:", added_animal)
+            animal, enclosure = self.zoo.add_animal(species, enclosure_name)
+            print(f"Added {species}: {animal}")
+            print(f"Placed in enclosure {enclosure.name} ({enclosure.habitat_type})")
+            print(f"{animal.name} lets out a {animal.make_sound()}")
         except ValueError as e:
             print("Error:", e)
 
@@ -86,8 +105,8 @@ class Command(cmd.Cmd):
         food_type = parts[0]
         food_quantity = parts[1]
 
-        if food_type.lower() not in ("meat", "fruit"):
-            print("Error: Food type must be 'Meat' or 'Fruit'")
+        if food_type.lower() not in ("meat", "leaves"):
+            print("Error: Food type must be 'Meat' or 'Leaves'")
             return
 
         try:
@@ -136,7 +155,6 @@ class Command(cmd.Cmd):
         try:
             enclosure, new_cap = self.zoo.upgrade_enclosure(enclosure_name)
             print(f"Enclosure {enclosure.name} upgraded! New capacity: {new_cap}")
-            print(f"Remaining budget: {self.zoo.manager.budget}")
         except ValueError as e:
             print("Error:", e)
 
