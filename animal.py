@@ -7,7 +7,7 @@ class Animal(ABC):
     
     def __init__(self):
         base = random.choice(self.ANIMAL_NAMES)
-        suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=3))
+        suffix = ''.join(random.choices(string.digits, k=2))
         self.name = f"{base}-{suffix}"
         self.happiness = 100
         self.enclosure = None
@@ -16,7 +16,7 @@ class Animal(ABC):
         self.breeding_counter = 0
         self.has_bred = False
 
-    def deteriorate_happiness(self, amount=10):
+    def deteriorate_happiness(self, amount=5):
         if self.status == "Dead":
             return
 

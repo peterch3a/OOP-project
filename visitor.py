@@ -6,7 +6,7 @@ class Visitor:
     
     def __init__(self):
         base = random.choice(self.VISITOR_NAMES)
-        suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=3))
+        suffix = ''.join(random.choices(string.digits, k=2))
         self.name = f"{base}-{suffix}"
         self.happiness = 100
         self.status = "Present"
@@ -23,4 +23,4 @@ class Visitor:
             print(f"{self.name} has left the Zoo.")
     
     def __str__(self):
-        return f"{self.name} ({self.__class__.__name__}, Happiness: {self.happiness}, {self.status}, Enclosure: {self.enclosure})"
+        return f"{self.name} ({self.__class__.__name__}, Happiness: {self.happiness}, Enclosure: {self.enclosure})"

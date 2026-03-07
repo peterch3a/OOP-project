@@ -12,28 +12,28 @@ class SpecialEvent(ABC):
     def __str__(self):
         return self.name
 
-class HappyDayEvent(SpecialEvent):
+class HappyEvent(SpecialEvent):
     name = "Happy Day"
 
     def apply(self, zoo):
         for enclosure in zoo.enclosures:
             for animal in enclosure.animals:
-                animal.happiness = min(100, animal.happiness + 20)
+                animal.happiness = min(100, animal.happiness + 50)
 
         for visitor in zoo.visitors:
-            visitor.happiness = min(100, visitor.happiness + 20)
+            visitor.happiness = min(100, visitor.happiness + 50)
 
-        print("A beautiful sunny day! Animals and visitors feel happier.")
+        print("A beautiful sunny day! Animals and visitors gained 50 Happiness!")
 
-class GenerousDonationEvent(SpecialEvent):
+class DonationEvent(SpecialEvent):
     name = "Generous Donation"
 
     def apply(self, zoo):
         amount = random.randint(200, 600)
         zoo.manager.budget += amount
-        print(f"A wealthy donor supports the zoo! Budget increased by ${amount}.")
+        print(f"A local has donated a large sum to the zoo! Budget increased by ${amount}.")
 
-class AnimalBlessingEvent(SpecialEvent):
+class BlessingEvent(SpecialEvent):
     name = "Animal Blessing"
 
     def apply(self, zoo):
@@ -44,9 +44,9 @@ class AnimalBlessingEvent(SpecialEvent):
                     animal.happiness = 100
                     boosted += 1
 
-        print(f"A magical moment! {boosted} animals feel exceptionally joyful.")
+        print(f"A magical moment! {boosted} animals gained 100 Happiness!")
 
-class VisitorFestivalEvent(SpecialEvent):
+class VisitorEvent(SpecialEvent):
     name = "Visitor Festival"
 
     def apply(self, zoo):
@@ -59,7 +59,7 @@ class VisitorFestivalEvent(SpecialEvent):
         print(f"A festival attracts {new_visitors} new visitors!")
         print(f"Ticket revenue earned: ${new_visitors * zoo.ticket_price}")
 
-class DisasterDeathsEvent(SpecialEvent):
+class DisasterEvent(SpecialEvent):
     name = "Disaster Deaths"
 
     def apply(self, zoo):
@@ -77,14 +77,14 @@ class DisasterDeathsEvent(SpecialEvent):
                 visitor.status = "Exited"
                 exited_visitors += 1
 
-        print(f"A sudden disaster! {dead_animals} animals died and {exited_visitors} visitors fled.")
+        print(f"A terrible disaster... {dead_animals} animals died and {exited_visitors} visitors fled.")
 
 
-class FoodShortageEvent(SpecialEvent):
-    name = "Food Shortage"
+class FoodDepleteEvent(SpecialEvent):
+    name = "Food Deplete"
 
     def apply(self, zoo):
         for food in zoo.food:
             food.quantity = 0
 
-        print("A supply chain failure! All food stocks have been lost.")
+        print("A pest invasion has made its way to the animal food stocks! All food stocks have been lost.")

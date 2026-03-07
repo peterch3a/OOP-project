@@ -13,7 +13,7 @@ class Game:
             time.sleep(1)
             while True:
                 self.zoo.update()
-                time.sleep(2)
+                time.sleep(3)
 
         t = threading.Thread(target=loop, daemon=True)
         t.start()

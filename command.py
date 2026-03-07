@@ -1,6 +1,6 @@
 from prompt_toolkit import PromptSession
 from prompt_toolkit.patch_stdout import patch_stdout
-
+from exceptions import HabitatCapacityExceededError
 
 def command_category(name):
     def decorator(func):
@@ -107,6 +107,8 @@ class Command:
             print(f"Added {species}: {animal}")
             print(f"Placed in enclosure {enclosure.name} ({enclosure.habitat_type})")
             print(f"{animal.name} lets out a {animal.make_sound()}")
+        except HabitatCapacityExceededError as e:
+            print("Capacity Error:", e)
         except ValueError as e:
             print("Error:", e)
 
@@ -168,9 +170,11 @@ class Command:
             print("Available habitats:", ", ".join(HABITATS))
             return
 
-        habitat = matches[0]
-        enclosure = self.zoo.add_enclosure(habitat)
-        print(f"Added Enclosure: {enclosure}")
+        try:
+            enclosure = self.zoo.add_enclosure(matches[0])
+            print(f"Added Enclosure: {enclosure}")
+        except Exception as e:
+            print(f"Error: {e}")
 
     @command_category("Shop")
     def do_upgrade_enclosure(self, arg):
@@ -211,6 +215,28 @@ class Command:
             print(f"Ticket price updated to ${new_price}")
         except ValueError as e:
             print("Error:", e)
+
+    @command_category("Manage")
+    def do_clean_enclosure(self, arg):
+        """Clean a specific enclosure, Cost: $20 — clean_enclosure <EnclosureName>"""
+        name = arg.strip()
+
+        if not name:
+            print("Usage: clean_enclosure <EnclosureName>")
+            return
+
+        enclosure, error = self.zoo.clean_enclosure(name)
+
+        if enclosure is None:
+            print("Error:", error)
+
+    @command_category("Status")
+    def do_show_cleanliness(self, arg):
+        """Show cleanliness levels of all enclosures"""
+        for enclosure in self.zoo.enclosures:
+            print(f"{enclosure.name}: {enclosure.cleanliness}% cleanliness")
+
+
 
     # @command_category("System")
     # def do_trigger_event(self, arg):
