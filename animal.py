@@ -1,11 +1,14 @@
 from abc import ABC, abstractmethod
 import random
+import string
 
 class Animal(ABC):
-    ANIMAL_NAMES = ["Bob", "Alice", "Geoff"]
+    ANIMAL_NAMES = ["Lucky", "Comet", "Ollie", "Milo", "Max", "Daisy", "Luna", "Honey", "Rosie", "Bella"]
     
     def __init__(self):
-        self.name = random.choice(Animal.ANIMAL_NAMES)
+        base = random.choice(self.ANIMAL_NAMES)
+        suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=3))
+        self.name = f"{base}-{suffix}"
         self.happiness = 100
         self.enclosure = None
         self.status = "Alive"
@@ -61,7 +64,7 @@ class Koala(Marsupial):
     happiness_gain = 10
     def __init__(self):
         super().__init__()
-        self.required_habitat = "Eucalyptus Forest"
+        self.required_habitat = "Forest"
 
     def make_sound(self):
         return "Grunt"
@@ -89,7 +92,7 @@ class WedgeTailedEagle(Bird):
     happiness_gain = 10
     def __init__(self):
         super().__init__()
-        self.required_habitat = "Mountain Range"
+        self.required_habitat = "Mountain"
 
     def make_sound(self):
         return "Screech"

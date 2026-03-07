@@ -1,10 +1,13 @@
 import random
+import string
 
 class Visitor:
-    VISITOR_NAMES = ["Bob", "Alice", "Geoff", "Nathan", "Sarah", "Jane"]
+    VISITOR_NAMES = ["Bob", "James", "Geoff", "Nathan", "John", "Sarah", "Jane", "Alice", "Mary", "Eve"]
     
     def __init__(self):
-        self.name = random.choice(Visitor.VISITOR_NAMES)
+        base = random.choice(self.VISITOR_NAMES)
+        suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=3))
+        self.name = f"{base}-{suffix}"
         self.happiness = 100
         self.status = "Present"
         self.enclosure = None
@@ -17,7 +20,7 @@ class Visitor:
 
         if self.happiness <= 0 and self.status == "Present":
             self.status = "Exited"
-            print(f"{self.name} has left the Zoo!")
+            print(f"{self.name} has left the Zoo.")
     
     def __str__(self):
         return f"{self.name} ({self.__class__.__name__}, Happiness: {self.happiness}, {self.status}, Enclosure: {self.enclosure})"

@@ -6,11 +6,20 @@ from food import Food
 from enclosure import Enclosure
 from animal import Koala, Kangaroo, WedgeTailedEagle
 from visitor import Visitor
+from special_events import (
+    HappyDayEvent,
+    GenerousDonationEvent,
+    AnimalBlessingEvent,
+    VisitorFestivalEvent,
+    DisasterDeathsEvent,
+    FoodShortageEvent
+)
+
 
 class Zoo:
     LOW_FOOD_THRESHOLD = 30
     FEED_AMOUNT_PER_ANIMAL = 5
-    ANIMAL_COSTS = {"Koala": 150,"Kangaroo": 150, "WedgeTailedEagle": 100}
+    # ANIMAL_COSTS = {"Koala": 100,"Kangaroo": 100, "WedgeTailedEagle": 100}
 
     def __init__(self):
         self.manager = Manager()
@@ -19,7 +28,16 @@ class Zoo:
         self.food = [Food("meat", 100),Food("leaves", 100)]
         self.medicine_inventory = []
         self.ticket_price = 25
-        
+        self.special_events = [
+            HappyDayEvent(),
+            GenerousDonationEvent(),
+            AnimalBlessingEvent(),
+            VisitorFestivalEvent(),
+            DisasterDeathsEvent(),
+            FoodShortageEvent()
+        ]
+
+
     def update(self):
         for enclosure in self.enclosures:
             for animal in enclosure.animals:
@@ -34,12 +52,15 @@ class Zoo:
         self.handle_breeding()
         self.feed_animals()
         self.visitor_enter()
+        self.trigger_special_event()
         self.visitors = [v for v in self.visitors if v.status != "Exited"]
         
     def add_food(self, food_type, food_quantity):
+        cost = food_quantity * 1
         for food in self.food:
             if food.food_type.lower() == food_type:
                 food.quantity += food_quantity
+                self.manager.budget -= cost
                 return food
 
     def show_food(self):
@@ -71,16 +92,12 @@ class Zoo:
 
                 food_map[diet].quantity -= Zoo.FEED_AMOUNT_PER_ANIMAL
 
-            # if food_map[diet].quantity < 0:
-            #     food_map[diet].quantity = 0
-
     def add_enclosure(self, habitat_type, cost=400):
         if self.manager.budget < cost:
             raise ValueError("Not enough budget to buy enclosure.")
         enclosure = Enclosure(habitat_type)
         self.enclosures.append(enclosure)
         self.manager.budget -= cost
-        # print(f"Your new budget is {self.manager.budget}")
         return enclosure
 
     def upgrade_enclosure(self, enclosure_name, cost=50):
@@ -91,7 +108,6 @@ class Zoo:
             if enclosure.name.lower() == enclosure_name.lower():
                 new_cap = enclosure.upgrade()
                 self.manager.budget -= cost
-                # print(f"Your new budget is {self.manager.budget}")
                 return enclosure, new_cap
 
         raise ValueError(f"No enclosure found with name '{enclosure_name}'.")
@@ -110,7 +126,7 @@ class Zoo:
         if species not in species_type:
             raise ValueError(f"Unknown species '{species}'.")
 
-        cost = Zoo.ANIMAL_COSTS[species]
+        cost = 100
         if self.manager.budget < cost:
             raise ValueError(f"Not enough budget to purchase a {species} (cost {cost}).")
         
@@ -175,7 +191,6 @@ class Zoo:
 
                     for a in eligible:
                         a.has_bred = True
-                        # a.breeding_counter = 0
 
     def visitor_enter(self):
         if random.random() <= 0.2:
@@ -228,36 +243,30 @@ class Zoo:
             visitor.enclosure = None
             print(f"{visitor.name} felt sad seeing the unhappy animals in Enclosure {enclosure.name}.")
         
+    def set_ticket_price(self, new_price):
+        """Set a new ticket price after validating it."""
+        try:
+            price = int(new_price)
+        except ValueError:
+            raise ValueError("Ticket price must be an integer.")
 
+        if price < 0:
+            raise ValueError("Ticket price cannot be negative.")
 
+        self.ticket_price = price
+        return price
 
     def show_budget(self):
-        print("Budget: ",self.manager.budget)
+        return
+    
+    def trigger_special_event(self):
+        if random.random() > 0.03:
+            return
 
+        event = random.choice(self.special_events)
+        print(f"\n*** SPECIAL EVENT TRIGGERED: {event.name} ***")
+        event.apply(self)
 
-    # def add_medicine(self, medicine):
-    #     self.medicine_inventory.append(medicine)
-
-    # def __str__(self):
-    #     return f"Zoo: {self.name} with {len(self.enclosures)} enclosures"
-
-# class Medicine:
-#     def __init__(self, name, dosage):
-#         self.name = name
-#         self.dosage = dosage
-
-#     def __str__(self):
-#         return f"{self.name}, dosage: {self.dosage}"
-
-
-# class Habitat:
-#     def __init__(self, habitat_type, temperature, humidity):
-#         self.habitat_type = habitat_type
-#         self.temperature = temperature
-#         self.humidity = humidity
-
-#     def __str__(self):
-#         return f"{self.habitat_type} (Temp: {self.temperature}, Humidity: {self.humidity})"
 
 
 

@@ -9,7 +9,7 @@ def command_category(name):
     return decorator
 
 class Command:
-    CATEGORY_ORDER = ["Status","Shop","System"]
+    CATEGORY_ORDER = ["Status","Shop","System","Manage"]
     intro = 'Welcome to OzZoo'
     prompt = ">> "
 
@@ -42,9 +42,10 @@ class Command:
                     else:
                         print(f"Unknown command: {cmd}")
 
-                    print(f"Current budget: {self.zoo.manager.budget}")
+                    print(f"Current budget: ${self.zoo.manager.budget}")
 
                 except KeyboardInterrupt:
+                    print("Interrupted. Press Ctrl+D to exit.")
                     continue
                 except EOFError:
                     print("\nExiting...")
@@ -75,6 +76,8 @@ class Command:
                 print(f"\n[{category}]")
                 for cmd_name, doc in commands:
                     print(f"  {cmd_name:<15} {doc}")
+        
+        print(f"Current budget: ${self.zoo.manager.budget}")
 
     def do_menu(self, arg):
         """Show menu"""
@@ -82,7 +85,7 @@ class Command:
 
     @command_category("Shop")
     def do_add_animal(self, arg):
-        """Purchase an Animal and place it in an Enclosure: add_animal <Species> <EnclosureName>"""
+        """Purchase an Animal and place it in an Enclosure, Cost: $100 - add_animal <Species> <EnclosureName>"""
 
         if not self.zoo.enclosures:
             print("Error: No enclosures available. Please add an enclosure first.")
@@ -119,7 +122,7 @@ class Command:
 
     @command_category("Shop")
     def do_add_food(self, arg):
-        """Purchase food <FoodType> <Quantity>"""
+        """Purchase food, Cost: $1 per food - add_food <FoodType> <Quantity>"""
         parts = arg.split()
 
         if len(parts) != 2:
@@ -140,6 +143,8 @@ class Command:
             return
 
         self.zoo.add_food(food_type, food_quantity)
+        print(f"Purchased {food_quantity} units of {food_type}.")
+
 
     @command_category("Status")
     def do_show_food(self, arg):
@@ -148,9 +153,9 @@ class Command:
 
     @command_category("Shop")
     def do_add_enclosure(self, arg):
-        """Purchase an Enclosure <HabitatType>"""
+        """Purchase an Enclosure, Cost: $400 - add_enclosure <HabitatType>"""
         habitat = arg.strip()
-        HABITATS = ["Grassland", "Eucalyptus Forest","Mountain Range"]
+        HABITATS = ["Grassland", "Forest","Mountain"]
 
         if not habitat:
             print("Usage: add_enclosure <HabitatType>")
@@ -169,7 +174,7 @@ class Command:
 
     @command_category("Shop")
     def do_upgrade_enclosure(self, arg):
-        """Upgrade an enclosure's capacity by 5 (max 25): upgrade_enclosure <EnclosureName>"""
+        """Upgrade an enclosure's capacity by 5 (max 25), Cost: $50 - upgrade_enclosure <EnclosureName>"""
         enclosure_name = arg.strip()
 
         if not enclosure_name:
@@ -191,6 +196,44 @@ class Command:
     def do_show_visitors(self, arg):
         """Show all Visitors"""
         self.zoo.show_visitors()
+
+    @command_category("Manage")
+    def do_set_ticket_price(self, arg):
+        """Set ticket price (Default: $25) - set_ticket_price <Amount>"""
+        arg = arg.strip()
+
+        if not arg:
+            print("Usage: set_ticket_price <Amount>")
+            return
+
+        try:
+            new_price = self.zoo.set_ticket_price(arg)
+            print(f"Ticket price updated to ${new_price}")
+        except ValueError as e:
+            print("Error:", e)
+
+    # @command_category("System")
+    # def do_trigger_event(self, arg):
+    #     """Trigger a special event manually - trigger_event <EventName>"""
+
+    #     arg = arg.strip()
+
+    #     if not arg:
+    #         print("Available special events:")
+    #         for event in self.zoo.special_events:
+    #             print(" -", event.name)
+    #         return
+
+    #     matches = [e for e in self.zoo.special_events if e.name.lower() == arg.lower()]
+
+    #     if not matches:
+    #         print(f"No event named '{arg}'.")
+    #         return
+
+    #     event = matches[0]
+    #     print(f"\n*** MANUAL EVENT TRIGGERED: {event.name} ***")
+    #     event.apply(self.zoo)
+
 
     # def do_exit(self, arg):
     #     """Exit the program"""
