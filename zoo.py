@@ -13,19 +13,65 @@ class Zoo:
     FEED_AMOUNT_PER_ANIMAL = 5
 
     def __init__(self):
-        self.manager = Manager()
-        self.enclosures = []
-        self.visitors = []
-        self.food = [Food("meat", 100),Food("leaves", 100)]
-        self.medicine_inventory = []
-        self.ticket_price = 25
-        self.special_events = [HappyEvent(), DonationEvent(), BlessingEvent(), VisitorEvent(), DisasterEvent(), FoodDepleteEvent()]
+        self._manager = Manager()
+        self._enclosures = []
+        self._visitors = []
+        self._food = [Food("meat", 100), Food("leaves", 100)]
+        self._ticket_price = 25
+        self._special_events = [
+            HappyEvent(), DonationEvent(), BlessingEvent(),
+            VisitorEvent(), DisasterEvent(), FoodDepleteEvent()
+        ]
+        self._consecutive_refusals = 0
+
+    # -------- properties --------
+
+    @property
+    def manager(self):
+        return self._manager
+
+    @property
+    def enclosures(self):
+        return self._enclosures
+
+    @property
+    def visitors(self):
+        return self._visitors
+
+    @visitors.setter
+    def visitors(self, value):
+        self._visitors = value
+
+    @property
+    def food(self):
+        return self._food
+
+    @property
+    def ticket_price(self):
+        return self._ticket_price
+
+    @ticket_price.setter
+    def ticket_price(self, value):
+        self._ticket_price = value
+
+    @property
+    def special_events(self):
+        return self._special_events
+
+    @property
+    def consecutive_refusals(self):
+        return self._consecutive_refusals
+
+    @consecutive_refusals.setter
+    def consecutive_refusals(self, value):
+        self._consecutive_refusals = max(0, value)
+
 
     def update(self):
         for enclosure in self.enclosures:
             for animal in enclosure.animals:
                 animal.deteriorate_happiness()
-            enclosure.animals = [a for a in enclosure.animals if a.status != "Dead"]
+            enclosure.animals[:] = [a for a in enclosure.animals if a.status != "Dead"]
 
         for enclosure in self.enclosures:
             enclosure.deteriorate_cleanliness()
@@ -55,7 +101,7 @@ class Zoo:
         for food in self.food:
             if food.food_type.lower() == food_type:
                 food.quantity += food_quantity
-                self.manager.budget -= cost
+                self._manager.budget -= cost
                 return food
 
     def show_food(self):
@@ -86,46 +132,46 @@ class Zoo:
                 food_map[diet].quantity -= Zoo.FEED_AMOUNT_PER_ANIMAL
 
     def add_enclosure(self, habitat_type, cost=400):
-        if self.manager.budget < cost:
+        if self._manager.budget < cost:
             raise ValueError("Not enough budget to buy enclosure.")
         enclosure = Enclosure(habitat_type)
-        self.enclosures.append(enclosure)
-        self.manager.budget -= cost
+        self._enclosures.append(enclosure)
+        self._manager.budget -= cost
         return enclosure
 
     def upgrade_enclosure(self, enclosure_name, cost=50):
-        if self.manager.budget < cost:
+        if self._manager.budget < cost:
             raise ValueError("Not enough budget to upgrade enclosure.")
 
-        for enclosure in self.enclosures:
+        for enclosure in self._enclosures:
             if enclosure.name.lower() == enclosure_name.lower():
                 new_cap = enclosure.upgrade()
-                self.manager.budget -= cost
+                self._manager.budget -= cost
                 return enclosure, new_cap
 
         raise ValueError(f"No enclosure found with name '{enclosure_name}'.")
 
     def show_enclosures(self):
         print("Enclosures in the zoo:")
-        for enclosure in self.enclosures:
+        for enclosure in self._enclosures:
             print(f"- {enclosure}")
 
     def add_animal(self, species, enclosure_name):
-        if not self.enclosures:
+        if not self._enclosures:
             raise ValueError("No enclosures available. Please add an enclosure first.")
 
         species_key = species.replace(" ", "").replace("-", "").lower()
-        species_type = {"koala": Koala, "kangaroo": Kangaroo, "wedgedtailedeagle": WedgeTailedEagle}
+        species_type = {"koala": Koala, "kangaroo": Kangaroo, "wedgetailedeagle": WedgeTailedEagle}
 
         if species_key not in species_type:
             raise ValueError(f"Unknown species '{species}'. ""Valid species: Koala, Kangaroo, WedgeTailedEagle")
 
         cost = 100
-        if self.manager.budget < cost:
+        if self._manager.budget < cost:
             raise ValueError(f"Not enough budget to purchase a {species} (cost {cost}).")
         
         enclosure = None
-        for e in self.enclosures:
+        for e in self._enclosures:
             if e.name.lower() == enclosure_name.lower():
                 enclosure = e
                 break
@@ -133,7 +179,7 @@ class Zoo:
         if enclosure is None:
             raise ValueError(f"No enclosure found with name '{enclosure_name}'.")
 
-        self.manager.budget -= cost
+        self._manager.budget -= cost
         animal_class = species_type[species_key]
         animal = animal_class()
         enclosure.add_animal(animal)
@@ -142,7 +188,7 @@ class Zoo:
 
     def show_animals(self):
         print("Animals in the zoo:")
-        for enclosure in self.enclosures:
+        for enclosure in self._enclosures:
             print(enclosure)
             for animal in enclosure.animals:
                 print(f"\t- {animal}")
@@ -150,7 +196,7 @@ class Zoo:
     def handle_breeding(self):
         BREEDING_THRESHOLD = 7
 
-        for enclosure in self.enclosures:
+        for enclosure in self._enclosures:
             species_groups = {}
             for animal in enclosure.animals:
                 if animal.status == "Alive":
@@ -185,23 +231,40 @@ class Zoo:
                         a.has_bred = True
 
     def visitor_enter(self):
-        if random.random() <= 0.2:
-            self.manager.budget += self.ticket_price
+        if random.random() <= 0.8:
+            price = self._ticket_price
+            base_price = 25
+
+            if price <= base_price:
+                chance_to_enter = 1.0
+            else:
+                chance_to_enter = max(0, 1 - ((price - base_price) / base_price))
+
+            if random.random() > chance_to_enter:
+                self._consecutive_refusals += 1
+                print(f"A visitor refused to enter due to high ticket price (${price}).")
+
+                if self._consecutive_refusals >= 3:
+                    print("Many visitors are refusing to enter due to high ticket prices, consider lowering the price.")
+                return
+
+            self._consecutive_refusals = 0
+            self._manager.budget += price
             visitor = Visitor()
-            self.visitors.append(visitor)
-            print("New visitor arrived:",visitor)
+            self._visitors.append(visitor)
+            print("New visitor: ",visitor)
 
     def show_visitors(self):
         print("Visitors in the zoo:")
-        for visitor in self.visitors:
+        for visitor in self._visitors:
             print(visitor)
 
     def visitor_goto_enclosure(self, visitor):
-        if len(self.enclosures) == 0:
+        if len(self._enclosures) == 0:
             return
         
         if random.random() <= 0.1:
-            chosen_enclosure = random.choice(self.enclosures)
+            chosen_enclosure = random.choice(self._enclosures)
             visitor.enclosure = chosen_enclosure
             print(f"{visitor.name} has entered Enclosure {chosen_enclosure}")
 
@@ -223,12 +286,12 @@ class Zoo:
 
         if avg_happiness >= 70:
             visitor.happiness = min(100, visitor.happiness + 20)
-            self.manager.budget += 100
+            self._manager.budget += 100
             visitor.enclosure = None
             print(f"{visitor.name} enjoyed seeing the happy animals in Enclosure {enclosure.name}. They donated $100! Your new budget is {self.manager.budget}")
         elif avg_happiness >= 40:
             visitor.happiness = min(100, visitor.happiness + 10)
-            self.manager.budget += 10
+            self._manager.budget += 10
             visitor.enclosure = None
             print(f"{visitor.name} had an okay time viewing Enclosure {enclosure.name}, they bought a souvenir to take home.")
         else:
@@ -245,11 +308,11 @@ class Zoo:
         if price < 0:
             raise ValueError("Ticket price cannot be negative.")
 
-        self.ticket_price = price
+        self._ticket_price = price
         return price
 
     def get_enclosure(self, name):
-        for enclosure in self.enclosures:
+        for enclosure in self._enclosures:
             if enclosure.name.lower() == name.lower():
                 return enclosure
         return None
@@ -260,24 +323,20 @@ class Zoo:
         if enclosure is None:
             return None, f"No enclosure found with name '{enclosure_name}'."
 
-        if self.manager.budget < cost:
+        if self._manager.budget < cost:
             return None, "Not enough budget to clean this enclosure."
 
         enclosure.clean()
-        self.manager.budget -= cost
+        self._manager.budget -= cost
         return enclosure, None
 
     def show_budget(self):
         return
 
     def trigger_special_event(self):
-        if random.random() > 0.03:
+        if random.random() > 0.04:
             return
 
         event = random.choice(self.special_events)
-        print(f"\n*** SPECIAL EVENT TRIGGERED: {event.name} ***")
+        print(f"\n*** SPECIAL EVENT: {event.name} ***")
         event.apply(self)
-
-
-
-

@@ -2,18 +2,26 @@ import random
 from abc import ABC, abstractmethod
 from visitor import Visitor
 
+
 class SpecialEvent(ABC):
-    name = "Unnamed Event"
+    def __init__(self, name="Unnamed Event"):
+        self._name = name
+
+    @property
+    def name(self):
+        return self._name
 
     @abstractmethod
     def apply(self, zoo):
         pass
 
     def __str__(self):
-        return self.name
+        return self._name
+
 
 class HappyEvent(SpecialEvent):
-    name = "Happy Day"
+    def __init__(self):
+        super().__init__("Happy Day")
 
     def apply(self, zoo):
         for enclosure in zoo.enclosures:
@@ -25,16 +33,20 @@ class HappyEvent(SpecialEvent):
 
         print("A beautiful sunny day! Animals and visitors gained 50 Happiness!")
 
+
 class DonationEvent(SpecialEvent):
-    name = "Generous Donation"
+    def __init__(self):
+        super().__init__("Generous Donation")
 
     def apply(self, zoo):
         amount = random.randint(200, 600)
         zoo.manager.budget += amount
         print(f"A local has donated a large sum to the zoo! Budget increased by ${amount}.")
 
+
 class BlessingEvent(SpecialEvent):
-    name = "Animal Blessing"
+    def __init__(self):
+        super().__init__("Animal Blessing")
 
     def apply(self, zoo):
         boosted = 0
@@ -46,11 +58,14 @@ class BlessingEvent(SpecialEvent):
 
         print(f"A magical moment! {boosted} animals gained 100 Happiness!")
 
+
 class VisitorEvent(SpecialEvent):
-    name = "Visitor Festival"
+    def __init__(self):
+        super().__init__("Visitor Festival")
 
     def apply(self, zoo):
         new_visitors = random.randint(3, 7)
+
         for _ in range(new_visitors):
             v = Visitor()
             zoo.visitors.append(v)
@@ -59,8 +74,10 @@ class VisitorEvent(SpecialEvent):
         print(f"A festival attracts {new_visitors} new visitors!")
         print(f"Ticket revenue earned: ${new_visitors * zoo.ticket_price}")
 
+
 class DisasterEvent(SpecialEvent):
-    name = "Disaster Deaths"
+    def __init__(self):
+        super().__init__("Disaster Deaths")
 
     def apply(self, zoo):
         dead_animals = 0
@@ -81,7 +98,8 @@ class DisasterEvent(SpecialEvent):
 
 
 class FoodDepleteEvent(SpecialEvent):
-    name = "Food Deplete"
+    def __init__(self):
+        super().__init__("Food Deplete")
 
     def apply(self, zoo):
         for food in zoo.food:

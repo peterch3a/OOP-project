@@ -2,30 +2,60 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.patch_stdout import patch_stdout
 from exceptions import HabitatCapacityExceededError
 
+
 def command_category(name):
     def decorator(func):
         func.category = name
         return func
     return decorator
 
+
 class Command:
-    CATEGORY_ORDER = ["Status","Shop","System","Manage"]
-    intro = 'Welcome to OzZoo'
-    prompt = ">> "
+    CATEGORY_ORDER = ["Status", "Shop", "System", "Manage"]
 
     def __init__(self, zoo):
-        self.zoo = zoo
-        self.zoo.command = self
-        self.session = PromptSession()
+        self._zoo = zoo
+        self._zoo.command = self
+        self._session = PromptSession()
+        self._intro = "Welcome to OzZoo"
+        self._prompt = ">> "
+
+    # ---------- properties ----------
+
+    @property
+    def zoo(self):
+        return self._zoo
+
+    @property
+    def session(self):
+        return self._session
+
+    @property
+    def intro(self):
+        return self._intro
+
+    @intro.setter
+    def intro(self, value):
+        self._intro = value
+
+    @property
+    def prompt(self):
+        return self._prompt
+
+    @prompt.setter
+    def prompt(self, value):
+        self._prompt = value
+
+    # ---------- core loop ----------
 
     def cmdloop(self):
-        print(self.intro)
+        print(self._intro)
         self.show_available_commands()
 
         with patch_stdout():
             while True:
                 try:
-                    line = self.session.prompt(self.prompt)
+                    line = self._session.prompt(self._prompt)
                     line = line.strip()
 
                     if not line:
@@ -42,7 +72,7 @@ class Command:
                     else:
                         print(f"Unknown command: {cmd}")
 
-                    print(f"Current budget: ${self.zoo.manager.budget}")
+                    print(f"Current budget: ${self._zoo.manager.budget}")
 
                 except KeyboardInterrupt:
                     print("Interrupted. Press Ctrl+D to exit.")
@@ -50,6 +80,8 @@ class Command:
                 except EOFError:
                     print("\nExiting...")
                     break
+
+    # ---------- menu / help ----------
 
     def show_available_commands(self):
         categories = {}
@@ -67,17 +99,19 @@ class Command:
 
         for category in self.CATEGORY_ORDER:
             if category in categories:
-                print(f"\n[{category}]")
+                print(f"[{category}]")
                 for cmd_name, doc in categories[category]:
-                    print(f"  {cmd_name:<15} {doc}")
+                    print(f"  {cmd_name:<20} {doc}")
 
         for category, commands in categories.items():
             if category not in self.CATEGORY_ORDER:
                 print(f"\n[{category}]")
                 for cmd_name, doc in commands:
-                    print(f"  {cmd_name:<15} {doc}")
-        
-        print(f"Current budget: ${self.zoo.manager.budget}")
+                    print(f"  {cmd_name:<20} {doc}")
+
+        print(f"\nCurrent budget: ${self._zoo.manager.budget}")
+
+    # ---------- commands ----------
 
     def do_menu(self, arg):
         """Show menu"""
@@ -87,7 +121,7 @@ class Command:
     def do_add_animal(self, arg):
         """Purchase an Animal and place it in an Enclosure, Cost: $100 - add_animal <Species> <EnclosureName>"""
 
-        if not self.zoo.enclosures:
+        if not self._zoo.enclosures:
             print("Error: No enclosures available. Please add an enclosure first.")
             return
 
@@ -96,14 +130,14 @@ class Command:
         if len(parts) != 2:
             print("Usage: add_animal <Koala|Kangaroo|WedgeTailedEagle> <EnclosureName>")
             print("Available enclosures:")
-            for e in self.zoo.enclosures:
+            for e in self._zoo.enclosures:
                 print(f"  {e.name} ({e.habitat_type}, capacity {e.capacity})")
             return
 
         species, enclosure_name = parts
 
         try:
-            animal, enclosure = self.zoo.add_animal(species, enclosure_name)
+            animal, enclosure = self._zoo.add_animal(species, enclosure_name)
             print(f"Added {species}: {animal}")
             print(f"Placed in enclosure {enclosure.name} ({enclosure.habitat_type})")
             print(f"{animal.name} lets out a {animal.make_sound()}")
@@ -115,12 +149,12 @@ class Command:
     @command_category("Status")
     def do_show_animals(self, arg):
         """Show all Animals"""
-        self.zoo.show_animals()
+        self._zoo.show_animals()
 
     @command_category("Status")
     def do_show_budget(self, arg):
         """Show current budget amount"""
-        self.zoo.show_budget()
+        self._zoo.show_budget()
 
     @command_category("Shop")
     def do_add_food(self, arg):
@@ -130,7 +164,7 @@ class Command:
         if len(parts) != 2:
             print("Usage: add_food <FoodType> <Quantity>")
             return
-        
+
         food_type = parts[0]
         food_quantity = parts[1]
 
@@ -144,20 +178,19 @@ class Command:
             print("Error: Quantity must be an integer")
             return
 
-        self.zoo.add_food(food_type, food_quantity)
+        self._zoo.add_food(food_type, food_quantity)
         print(f"Purchased {food_quantity} units of {food_type}.")
-
 
     @command_category("Status")
     def do_show_food(self, arg):
         """Show current food amount"""
-        self.zoo.show_food()
+        self._zoo.show_food()
 
     @command_category("Shop")
     def do_add_enclosure(self, arg):
         """Purchase an Enclosure, Cost: $400 - add_enclosure <HabitatType>"""
         habitat = arg.strip()
-        HABITATS = ["Grassland", "Forest","Mountain"]
+        HABITATS = ["Grassland", "Forest", "Mountain"]
 
         if not habitat:
             print("Usage: add_enclosure <HabitatType>")
@@ -171,7 +204,7 @@ class Command:
             return
 
         try:
-            enclosure = self.zoo.add_enclosure(matches[0])
+            enclosure = self._zoo.add_enclosure(matches[0])
             print(f"Added Enclosure: {enclosure}")
         except Exception as e:
             print(f"Error: {e}")
@@ -186,7 +219,7 @@ class Command:
             return
 
         try:
-            enclosure, new_cap = self.zoo.upgrade_enclosure(enclosure_name)
+            enclosure, new_cap = self._zoo.upgrade_enclosure(enclosure_name)
             print(f"Enclosure {enclosure.name} upgraded! New capacity: {new_cap}")
         except ValueError as e:
             print("Error:", e)
@@ -194,12 +227,12 @@ class Command:
     @command_category("Status")
     def do_show_enclosures(self, arg):
         """Show all Enclosures"""
-        self.zoo.show_enclosures()
+        self._zoo.show_enclosures()
 
     @command_category("Status")
     def do_show_visitors(self, arg):
         """Show all Visitors"""
-        self.zoo.show_visitors()
+        self._zoo.show_visitors()
 
     @command_category("Manage")
     def do_set_ticket_price(self, arg):
@@ -211,21 +244,21 @@ class Command:
             return
 
         try:
-            new_price = self.zoo.set_ticket_price(arg)
+            new_price = self._zoo.set_ticket_price(arg)
             print(f"Ticket price updated to ${new_price}")
         except ValueError as e:
             print("Error:", e)
 
     @command_category("Manage")
     def do_clean_enclosure(self, arg):
-        """Clean a specific enclosure, Cost: $20 — clean_enclosure <EnclosureName>"""
+        """Clean a specific enclosure, Cost: $20 - clean_enclosure <EnclosureName>"""
         name = arg.strip()
 
         if not name:
             print("Usage: clean_enclosure <EnclosureName>")
             return
 
-        enclosure, error = self.zoo.clean_enclosure(name)
+        enclosure, error = self._zoo.clean_enclosure(name)
 
         if enclosure is None:
             print("Error:", error)
@@ -233,34 +266,5 @@ class Command:
     @command_category("Status")
     def do_show_cleanliness(self, arg):
         """Show cleanliness levels of all enclosures"""
-        for enclosure in self.zoo.enclosures:
+        for enclosure in self._zoo.enclosures:
             print(f"{enclosure.name}: {enclosure.cleanliness}% cleanliness")
-
-
-
-    # @command_category("System")
-    # def do_trigger_event(self, arg):
-    #     """Trigger a special event manually - trigger_event <EventName>"""
-
-    #     arg = arg.strip()
-
-    #     if not arg:
-    #         print("Available special events:")
-    #         for event in self.zoo.special_events:
-    #             print(" -", event.name)
-    #         return
-
-    #     matches = [e for e in self.zoo.special_events if e.name.lower() == arg.lower()]
-
-    #     if not matches:
-    #         print(f"No event named '{arg}'.")
-    #         return
-
-    #     event = matches[0]
-    #     print(f"\n*** MANUAL EVENT TRIGGERED: {event.name} ***")
-    #     event.apply(self.zoo)
-
-
-    # def do_exit(self, arg):
-    #     """Exit the program"""
-    #     return True

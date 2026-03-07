@@ -2,43 +2,102 @@ from abc import ABC, abstractmethod
 import random
 import string
 
+
 class Animal(ABC):
-    ANIMAL_NAMES = ["Lucky", "Comet", "Ollie", "Milo", "Max", "Daisy", "Luna", "Honey", "Rosie", "Bella"]
-    
+    ANIMAL_NAMES = [
+        "Lucky", "Comet", "Ollie", "Milo", "Max",
+        "Daisy", "Luna", "Honey", "Rosie", "Bella"
+    ]
+
     def __init__(self):
         base = random.choice(self.ANIMAL_NAMES)
         suffix = ''.join(random.choices(string.digits, k=2))
-        self.name = f"{base}-{suffix}"
-        self.happiness = 100
-        self.enclosure = None
-        self.status = "Alive"
-        self.required_habitat = None
-        self.breeding_counter = 0
-        self.has_bred = False
+        self._name = f"{base}-{suffix}"
+        self.__happiness = 100
+        self._enclosure = None
+        self._status = "Alive"
+        self._required_habitat = None
+        self._breeding_counter = 0
+        self._has_bred = False
+
+    # -------- properties --------
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def happiness(self):
+        return self.__happiness
+
+    @happiness.setter
+    def happiness(self, value):
+        self.__happiness = max(0, min(100, value))
+
+    @property
+    def enclosure(self):
+        return self._enclosure
+
+    @enclosure.setter
+    def enclosure(self, enclosure):
+        self._enclosure = enclosure
+
+    @property
+    def status(self):
+        return self._status
+
+    @status.setter
+    def status(self, value):
+        self._status = value
+
+    @property
+    def required_habitat(self):
+        return self._required_habitat
+
+    @required_habitat.setter
+    def required_habitat(self, value):
+        self._required_habitat = value
+
+    @property
+    def breeding_counter(self):
+        return self._breeding_counter
+
+    @breeding_counter.setter
+    def breeding_counter(self, value):
+        self._breeding_counter = max(0, value)
+
+    @property
+    def has_bred(self):
+        return self._has_bred
+
+    @has_bred.setter
+    def has_bred(self, value):
+        self._has_bred = bool(value)
+
+    # -------- behaviour --------
 
     def deteriorate_happiness(self, amount=5):
-        if self.status == "Dead":
+        if self._status == "Dead":
             return
 
-        if self.enclosure and self.enclosure.habitat_type != self.required_habitat:
+        if self._enclosure and self._enclosure.habitat_type != self._required_habitat:
             amount += 10
 
-        self.happiness = max(0, self.happiness - amount)
+        self.happiness = self.__happiness - amount
 
-        if self.happiness <= 0 and self.status == "Alive":
-            self.status = "Dead"
-            print(f"{self.name} has died due to poor conditions!")
+        if self.__happiness <= 0 and self._status == "Alive":
+            self._status = "Dead"
+            print(f"{self._name} has died due to poor conditions!")
 
-        if self.happiness > 60:
-            self.breeding_counter += 1
+        if self.__happiness > 60:
+            self._breeding_counter += 1
         else:
-            self.breeding_counter = 0
+            self._breeding_counter = 0
 
     def feed(self, amount):
-        if self.status == "Dead":
+        if self._status == "Dead":
             return
-
-        self.happiness = min(100, self.happiness + amount)
+        self.happiness = self.__happiness + amount
 
     @abstractmethod
     def make_sound(self):
@@ -49,19 +108,23 @@ class Animal(ABC):
         pass
 
     def __str__(self):
-        return f"{self.name} ({self.__class__.__name__}, Happiness: {self.happiness}, {self.status})"
+        return f"{self._name} ({self.__class__.__name__}, Happiness: {self.__happiness}, {self._status})"
+
 
 class Mammal(Animal):
     def diet_type(self):
         return "Varies"
 
+
 class Marsupial(Mammal):
     def make_sound(self):
         return "Chitter-chatter"
 
+
 class Koala(Marsupial):
     preferred_food = "leaves"
     happiness_gain = 10
+
     def __init__(self):
         super().__init__()
         self.required_habitat = "Forest"
@@ -69,9 +132,11 @@ class Koala(Marsupial):
     def make_sound(self):
         return "Grunt"
 
+
 class Kangaroo(Marsupial):
     preferred_food = "leaves"
     happiness_gain = 10
+
     def __init__(self):
         super().__init__()
         self.required_habitat = "Grassland"
@@ -79,21 +144,27 @@ class Kangaroo(Marsupial):
     def make_sound(self):
         return "Thump"
 
+
 class Bird(Animal):
     def __init__(self):
         super().__init__()
-        self.can_fly = True
+        self._can_fly = True
+
+    @property
+    def can_fly(self):
+        return self._can_fly
 
     def make_sound(self):
         return "Chirp"
 
+
 class WedgeTailedEagle(Bird):
     preferred_food = "meat"
     happiness_gain = 10
+
     def __init__(self):
         super().__init__()
         self.required_habitat = "Mountain"
 
     def make_sound(self):
         return "Screech"
-
