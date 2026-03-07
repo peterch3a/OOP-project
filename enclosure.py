@@ -1,7 +1,7 @@
 import random
+import string
 from exceptions import HabitatCapacityExceededError
 from interfaces import ICleanable
-
 
 class Enclosure(ICleanable):
     BASE_CAPACITY = 10
@@ -9,13 +9,13 @@ class Enclosure(ICleanable):
     MAX_CAPACITY = 25
 
     def __init__(self, habitat_type):
-        self._name = random.choice(['A', 'B', 'C', 'D', 'E', 'F'])
+        base = random.choice(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'X', 'Y', 'Z'])
+        suffix = ''.join(random.choices(string.digits, k=1))
+        self._name = f"{base}{suffix}"
         self._habitat_type = habitat_type
         self._capacity = Enclosure.BASE_CAPACITY
         self._animals = []
         self.__cleanliness = 100
-
-    # -------- properties --------
 
     @property
     def name(self):
@@ -51,8 +51,6 @@ class Enclosure(ICleanable):
     def cleanliness(self, value):
         self.__cleanliness = max(0, min(100, value))
 
-    # -------- behaviour --------
-
     def add_animal(self, animal):
         if len(self._animals) >= self._capacity:
             raise HabitatCapacityExceededError(
@@ -80,6 +78,6 @@ class Enclosure(ICleanable):
     def __str__(self):
         return (
             f"Enclosure {self._name} "
-            f"({self._habitat_type}, capacity {self._capacity}, "
-            f"animals {len(self._animals)}, cleanliness {self.__cleanliness}%)"
+            f"({self._habitat_type}, Capacity: {self._capacity}, "
+            f"Animals: {len(self._animals)}, Cleanliness: {self.__cleanliness}%)"
         )

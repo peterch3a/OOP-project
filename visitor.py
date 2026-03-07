@@ -1,7 +1,6 @@
 import random
 import string
 
-
 class Visitor:
     VISITOR_NAMES = [
         "Bob", "James", "Geoff", "Nathan", "John",
@@ -15,8 +14,6 @@ class Visitor:
         self.__happiness = 100
         self._status = "Present"
         self._enclosure = None
-
-    # -------- properties --------
 
     @property
     def name(self):
@@ -45,8 +42,6 @@ class Visitor:
     @enclosure.setter
     def enclosure(self, value):
         self._enclosure = value
-
-    # -------- behaviour --------
 
     def deteriorate_happiness(self, amount=10):
         if self._status == "Exited":

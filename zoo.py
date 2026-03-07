@@ -24,8 +24,6 @@ class Zoo:
         ]
         self._consecutive_refusals = 0
 
-    # -------- properties --------
-
     @property
     def manager(self):
         return self._manager
@@ -65,7 +63,6 @@ class Zoo:
     @consecutive_refusals.setter
     def consecutive_refusals(self, value):
         self._consecutive_refusals = max(0, value)
-
 
     def update(self):
         for enclosure in self.enclosures:
@@ -231,7 +228,7 @@ class Zoo:
                         a.has_bred = True
 
     def visitor_enter(self):
-        if random.random() <= 0.8:
+        if random.random() <= 0.4:
             price = self._ticket_price
             base_price = 25
 
@@ -288,7 +285,7 @@ class Zoo:
             visitor.happiness = min(100, visitor.happiness + 20)
             self._manager.budget += 100
             visitor.enclosure = None
-            print(f"{visitor.name} enjoyed seeing the happy animals in Enclosure {enclosure.name}. They donated $100! Your new budget is {self.manager.budget}")
+            print(f"{visitor.name} enjoyed seeing the happy animals in Enclosure {enclosure.name}. They donated $100! Your new budget is ${self.manager.budget}")
         elif avg_happiness >= 40:
             visitor.happiness = min(100, visitor.happiness + 10)
             self._manager.budget += 10
@@ -334,7 +331,7 @@ class Zoo:
         return
 
     def trigger_special_event(self):
-        if random.random() > 0.04:
+        if random.random() > 0.03:
             return
 
         event = random.choice(self.special_events)

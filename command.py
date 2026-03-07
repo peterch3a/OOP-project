@@ -1,7 +1,7 @@
 from prompt_toolkit import PromptSession
 from prompt_toolkit.patch_stdout import patch_stdout
+from prompt_toolkit.completion import Completer, Completion
 from exceptions import HabitatCapacityExceededError
-
 
 def command_category(name):
     def decorator(func):
@@ -9,6 +9,57 @@ def command_category(name):
         return func
     return decorator
 
+class ZooCompleter(Completer):
+    def __init__(self, command):
+        self.command = command
+
+    def get_completions(self, document, complete_event):
+        text = document.text_before_cursor.strip()
+        parts = text.split()
+
+        if len(parts) == 0:
+            for cmd in self._command_list():
+                yield Completion(cmd, start_position=0)
+            return
+
+        if len(parts) == 1 and not text.endswith(" "):
+            for cmd in self._command_list():
+                if cmd.startswith(parts[0]):
+                    yield Completion(cmd, start_position=-len(parts[0]))
+            return
+
+        cmd = parts[0]
+        arg = parts[-1]
+
+        for suggestion in self._arg_suggestions(cmd):
+            if suggestion.lower().startswith(arg.lower()):
+                yield Completion(suggestion, start_position=-len(arg))
+
+    def _command_list(self):
+        return [
+            name[3:]
+            for name in dir(self.command)
+            if name.startswith("do_")
+        ]
+
+    def _arg_suggestions(self, cmd):
+        zoo = self.command.zoo
+
+        if cmd == "add_animal":
+            species = ["Koala", "Kangaroo", "WedgeTailedEagle"]
+            enclosures = [e.name for e in zoo.enclosures]
+            return species + enclosures
+
+        if cmd == "add_enclosure":
+            return ["Grassland", "Forest", "Mountain"]
+
+        if cmd == "add_food":
+            return ["Meat", "Leaves"]
+
+        if cmd in ("upgrade_enclosure", "clean_enclosure"):
+            return [e.name for e in zoo.enclosures]
+
+        return []
 
 class Command:
     CATEGORY_ORDER = ["Status", "Shop", "System", "Manage"]
@@ -16,11 +67,10 @@ class Command:
     def __init__(self, zoo):
         self._zoo = zoo
         self._zoo.command = self
-        self._session = PromptSession()
+        self._completer = ZooCompleter(self)
+        self._session = PromptSession(completer=self._completer)
         self._intro = "Welcome to OzZoo"
         self._prompt = ">> "
-
-    # ---------- properties ----------
 
     @property
     def zoo(self):
@@ -45,8 +95,6 @@ class Command:
     @prompt.setter
     def prompt(self, value):
         self._prompt = value
-
-    # ---------- core loop ----------
 
     def cmdloop(self):
         print(self._intro)
@@ -81,8 +129,6 @@ class Command:
                     print("\nExiting...")
                     break
 
-    # ---------- menu / help ----------
-
     def show_available_commands(self):
         categories = {}
 
@@ -111,8 +157,6 @@ class Command:
 
         print(f"\nCurrent budget: ${self._zoo.manager.budget}")
 
-    # ---------- commands ----------
-
     def do_menu(self, arg):
         """Show menu"""
         self.show_available_commands()
@@ -131,7 +175,7 @@ class Command:
             print("Usage: add_animal <Koala|Kangaroo|WedgeTailedEagle> <EnclosureName>")
             print("Available enclosures:")
             for e in self._zoo.enclosures:
-                print(f"  {e.name} ({e.habitat_type}, capacity {e.capacity})")
+                print(f"  {e.name} ({e.habitat_type}, Capacity: {e.capacity}, Animals: {len(e._animals)})")
             return
 
         species, enclosure_name = parts
@@ -267,4 +311,4 @@ class Command:
     def do_show_cleanliness(self, arg):
         """Show cleanliness levels of all enclosures"""
         for enclosure in self._zoo.enclosures:
-            print(f"{enclosure.name}: {enclosure.cleanliness}% cleanliness")
+            print(f"Enclosure {enclosure.name}: {enclosure.cleanliness}% cleanliness")
