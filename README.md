@@ -1,6 +1,3 @@
-A developer‑focused README for OzZoo benefits from being clear, structured, and aligned with conventions seen in high‑quality open‑source READMEs (as in the Awesome‑README collection). This version covers architecture, design philosophy, and how to run/extend the project.
-
----
 
 # OzZoo Simulator  
 A real‑time, command‑driven zoo management simulation built with Python.
