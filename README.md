@@ -90,10 +90,11 @@ They implement the `ICleanable` interface.
 
 ### Visitors
 Visitors:
+- Enter the Zoo based on ticket prices
 - Move randomly  
 - View enclosures  
-- Donate or leave based on animal happiness  
-- Deteriorate over time  
+- Donate based on animal happiness  
+- Leave eventually
 
 They are the primary source of income.
 
