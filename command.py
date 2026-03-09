@@ -278,7 +278,7 @@ class Command:
 
     @command_category("Shop")
     def do_add_animal(self, arg):
-        """Purchase an Animal and place it in an Enclosure, Cost: $100 - Usage: add_animal <Species> <EnclosureName>"""
+        """Purchase an Animal and place it in an Enclosure, Cost: $100. - Usage: add_animal <Species> <EnclosureName>"""
         
         if not self._zoo.enclosures:
             print("Error: No enclosures available. Please add an enclosure first.")
@@ -335,7 +335,7 @@ class Command:
 
     @command_category("Shop")
     def do_add_enclosure(self, arg):
-        """Purchase an Enclosure. Cost: $400 Usage: add_enclosure <HabitatType>"""
+        """Purchase an Enclosure. Cost: $400. Usage: add_enclosure <HabitatType>"""
         habitat = arg.strip()
         HABITATS = ["Grassland", "Forest", "Mountain"]
 
